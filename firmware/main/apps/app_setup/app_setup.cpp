@@ -83,6 +83,11 @@ void AppSetup::onOpen()
                   _destroy_menu    = true;
                   _need_warm_reset = true;
                   _worker          = std::make_unique<XiaozhiPowerSavingWorker>();
+              }},
+             {"Local Server",
+              [&]() {
+                  _destroy_menu = true;
+                  _worker       = std::make_unique<LocalAgentWorker>();
               }}},
         },
         {

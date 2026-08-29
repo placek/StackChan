@@ -180,6 +180,10 @@ void Hal::startXiaozhi()
 {
     mclog::tagInfo(_tag, "start xiaozhi");
 
+    // Point the agent runtime at the local agent server if one is configured,
+    // otherwise make sure the default cloud endpoint is used
+    hal_bridge::apply_local_agent_config();
+
     auto& motion = GetStackChan().motion();
     motion.setAutoAngleSyncEnabled(true);
     motion.setAutoTorqueReleaseEnabled(true);
@@ -220,6 +224,23 @@ void Hal::setXiaozhiConfig(XiaozhiConfig_t config)
         .allowShutdownWhenCharging = config.allowShutdownWhenCharging,
         .idleRandomMovementLevel   = config.idleRandomMovementLevel,
         .startAiAgentOnBoot        = config.startAiAgentOnBoot,
+    });
+}
+
+LocalAgentConfig_t Hal::getLocalAgentConfig()
+{
+    auto bridge_config = hal_bridge::get_local_agent_config();
+    return LocalAgentConfig_t{
+        .enabled = bridge_config.enabled,
+        .otaUrl  = bridge_config.otaUrl,
+    };
+}
+
+void Hal::setLocalAgentConfig(const LocalAgentConfig_t& config)
+{
+    hal_bridge::set_local_agent_config({
+        .enabled = config.enabled,
+        .otaUrl  = config.otaUrl,
     });
 }
 

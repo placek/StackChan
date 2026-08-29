@@ -1,0 +1,68 @@
+# Hermes bridge configuration.
+# Copy to config.yaml and adjust to your setup.
+
+server:
+  # Interface / port the bridge listens on.
+  host: 0.0.0.0
+  port: 8100
+  # URL the StackChan device uses to reach the websocket endpoint.
+  # Leave empty to derive it from the Host header of the OTA request.
+  advertise_url: ""
+  # Optional bearer token. If set, the device must present it (it is delivered
+  # to the device via the OTA response, nothing to configure on the device).
+  token: ""
+
+# The brain: a Hermes agent (or any OpenAI-compatible chat completions server).
+# https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server/
+hermes:
+  base_url: http://127.0.0.1:3000/v1
+  api_key: ""
+  model: hermes
+  # Extra system prompt prepended to the conversation.
+  system_prompt: >-
+    You are StackChan, a small cheerful desktop robot. Answer briefly and
+    conversationally; your replies are spoken out loud.
+  # Conversation turns kept per device.
+  history_turns: 20
+  # Forward the robot's MCP tools (servos, expressions, volume, ...) to the
+  # agent as tool calls.
+  bridge_device_tools: true
+
+# Speech to text: any OpenAI-compatible /v1/audio/transcriptions server
+# (e.g. speaches, faster-whisper-server, whisper.cpp server, LocalAI).
+stt:
+  base_url: http://127.0.0.1:8000/v1
+  api_key: ""
+  model: Systran/faster-whisper-small
+  language: ""
+
+# Text to speech: any OpenAI-compatible /v1/audio/speech server
+# (e.g. speaches, kokoro-fastapi, openedai-speech, LocalAI).
+tts:
+  base_url: http://127.0.0.1:8880/v1
+  api_key: ""
+  model: kokoro
+  voice: af_heart
+  speed: 1.0
+  # Audio format requested from the TTS server: "wav" or "pcm".
+  response_format: wav
+  # Sample rate of the returned audio when response_format is "pcm".
+  pcm_sample_rate: 24000
+
+audio:
+  # Sample rate of the audio sent to the device (Opus supports 8/12/16/24/48 kHz).
+  output_sample_rate: 24000
+  # Pacing factor for streaming audio frames to the device: 1.0 = real time,
+  # lower = faster than real time (more device-side buffering).
+  pacing: 0.6
+
+vad:
+  # End of utterance detection on the audio streamed by the device.
+  # RMS threshold (0..32768) above which a frame counts as speech.
+  energy_threshold: 500
+  # Silence duration (ms) that ends an utterance.
+  silence_ms: 900
+  # Minimum speech duration (ms) for an utterance to be processed.
+  min_speech_ms: 250
+  # Give up listening after this long without end of speech (ms).
+  max_utterance_ms: 30000

@@ -356,6 +356,26 @@ private:
 };
 
 /**
+ * @brief Configure the local (self-hosted) agent server, e.g. a Hermes bridge
+ *
+ */
+class LocalAgentWorker : public WorkerBase {
+public:
+    LocalAgentWorker();
+    void update() override;
+
+private:
+    std::unique_ptr<uitk::lvgl_cpp::Container> _panel;
+    std::unique_ptr<uitk::lvgl_cpp::Label> _label_title;
+    lv_obj_t* _textarea = nullptr;
+    lv_obj_t* _keyboard = nullptr;
+
+    LocalAgentConfig_t _config;
+    bool _confirm_flag = false;
+    bool _cancel_flag  = false;
+};
+
+/**
  * @brief
  *
  */
