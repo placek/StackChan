@@ -122,6 +122,15 @@ struct XiaozhiConfig_t {
 };
 
 /**
+ * @brief Local (self-hosted) agent server config, e.g. a Hermes agent bridge
+ *
+ */
+struct LocalAgentConfig_t {
+    bool enabled = false;
+    std::string otaUrl;
+};
+
+/**
  * @brief
  *
  */
@@ -214,6 +223,8 @@ public:
     void startXiaozhi();
     XiaozhiConfig_t getXiaozhiConfig();
     void setXiaozhiConfig(XiaozhiConfig_t config);
+    LocalAgentConfig_t getLocalAgentConfig();
+    void setLocalAgentConfig(const LocalAgentConfig_t& config);
 
     /* ----------------------------------- BLE ---------------------------------- */
     uitk::Signal<const char*> onBleMotionData;

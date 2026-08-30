@@ -4,6 +4,8 @@
 
 Here are StackChan related open-source resources, including source code of the StackChan firmware, remote controller firmware, mobile app (iOS and Android), and server. 
 
+The firmware also ships a **HERMES** app plus a self-hosted [hermes-bridge](hermes-bridge/README.md) server, which run the AI agent against a local [Hermes agent](https://hermes-agent.nousresearch.com/) (with local STT/TTS) instead of the default cloud — see [hermes-bridge/README.md](hermes-bridge/README.md). 
+
 Update of this repo could be a little late than the released firmware and mobile app. 
 
 ----

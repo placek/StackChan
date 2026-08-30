@@ -39,6 +39,13 @@ void AppAiAgent::onOpen()
 {
     mclog::tagInfo(getAppInfo().name, "on open");
 
+    // Make sure the default cloud is used instead of a local agent server
+    auto local_agent_config = GetHAL().getLocalAgentConfig();
+    if (local_agent_config.enabled) {
+        local_agent_config.enabled = false;
+        GetHAL().setLocalAgentConfig(local_agent_config);
+    }
+
     // Request to start Xiaozhi service
     // All apps will be uninstall in next mooncake update
     GetHAL().requestXiaozhiStart();

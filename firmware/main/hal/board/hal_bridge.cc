@@ -26,6 +26,10 @@ static constexpr std::string_view _xiaozhi_config_allow_shutdown_when_charging_k
 static constexpr std::string_view _xiaozhi_config_idle_random_movement_key         = "idle_lv";
 static constexpr std::string_view _xiaozhi_config_start_ai_agent_on_boot_key       = "boot_ai";
 
+static constexpr std::string_view _local_agent_config_nvs_ns     = "local_agent";
+static constexpr std::string_view _local_agent_config_enabled_key = "enabled";
+static constexpr std::string_view _local_agent_config_ota_url_key = "ota_url";
+
 namespace hal_bridge {
 
 /* -------------------------------------------------------------------------- */
@@ -143,6 +147,56 @@ void set_xiaozhi_config(const XiaozhiConfig_t& config)
     settings.SetBool(_xiaozhi_config_allow_shutdown_when_charging_key.data(), config.allowShutdownWhenCharging);
     settings.SetInt(_xiaozhi_config_idle_random_movement_key.data(), config.idleRandomMovementLevel);
     settings.SetBool(_xiaozhi_config_start_ai_agent_on_boot_key.data(), config.startAiAgentOnBoot);
+}
+
+LocalAgentConfig_t get_local_agent_config()
+{
+    LocalAgentConfig_t config;
+
+    Settings settings(_local_agent_config_nvs_ns.data(), false);
+    config.enabled = settings.GetBool(_local_agent_config_enabled_key.data(), config.enabled);
+    config.otaUrl  = settings.GetString(_local_agent_config_ota_url_key.data());
+
+    return config;
+}
+
+void set_local_agent_config(const LocalAgentConfig_t& config)
+{
+    Settings settings(_local_agent_config_nvs_ns.data(), true);
+    settings.SetBool(_local_agent_config_enabled_key.data(), config.enabled);
+    settings.SetString(_local_agent_config_ota_url_key.data(), config.otaUrl);
+}
+
+void apply_local_agent_config()
+{
+    auto config = get_local_agent_config();
+
+    Settings wifi_settings("wifi", true);
+    std::string current_ota_url = wifi_settings.GetString("ota_url");
+
+    std::string target_ota_url;
+    if (config.enabled && !config.otaUrl.empty()) {
+        target_ota_url = config.otaUrl;
+    }
+
+    if (current_ota_url == target_ota_url) {
+        return;
+    }
+
+    if (target_ota_url.empty()) {
+        // Restore the default cloud endpoint (CONFIG_OTA_URL fallback)
+        wifi_settings.EraseKey("ota_url");
+        ESP_LOGI(_tag, "agent server restored to default cloud");
+    } else {
+        wifi_settings.SetString("ota_url", target_ota_url);
+        ESP_LOGI(_tag, "agent server set to %s", target_ota_url.c_str());
+    }
+
+    // Drop protocol endpoints cached from the previous server
+    Settings websocket_settings("websocket", true);
+    websocket_settings.EraseKey("url");
+    websocket_settings.EraseKey("token");
+    websocket_settings.EraseKey("version");
 }
 
 void app_play_sound(const std::string_view& sound)

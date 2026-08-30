@@ -266,3 +266,84 @@ void XiaozhiGeneralWorker::update_idle_motion_label()
 {
     _label_idle_motion_value->setText(_idle_motion_level_labels[_config.idleRandomMovementLevel]);
 }
+
+LocalAgentWorker::LocalAgentWorker()
+{
+    mclog::info("LocalAgentWorker start");
+
+    _config = GetHAL().getLocalAgentConfig();
+
+    _panel = std::make_unique<Container>(lv_screen_active());
+    _panel->setBgColor(lv_color_hex(0xEDF4FF));
+    _panel->align(LV_ALIGN_CENTER, 0, 0);
+    _panel->setBorderWidth(0);
+    _panel->setSize(320, 240);
+    _panel->setRadius(0);
+    _panel->setPadding(0, 0, 0, 0);
+    _panel->removeFlag(LV_OBJ_FLAG_SCROLLABLE);
+
+    _label_title = std::make_unique<Label>(_panel->get());
+    _label_title->setText("Local agent server URL:");
+    _label_title->setWidth(300);
+    _label_title->setTextAlign(LV_TEXT_ALIGN_CENTER);
+    _label_title->setTextFont(&lv_font_montserrat_16);
+    _label_title->setTextColor(lv_color_hex(0x26206A));
+    _label_title->align(LV_ALIGN_TOP_MID, 0, 10);
+
+    _textarea = lv_textarea_create(_panel->get());
+    lv_textarea_set_one_line(_textarea, true);
+    lv_textarea_set_placeholder_text(_textarea, "http://192.168.1.10:8100/xiaozhi/ota/");
+    lv_textarea_set_text(_textarea, _config.otaUrl.c_str());
+    lv_obj_set_size(_textarea, 300, 40);
+    lv_obj_align(_textarea, LV_ALIGN_TOP_MID, 0, 38);
+
+    _keyboard = lv_keyboard_create(_panel->get());
+    lv_keyboard_set_mode(_keyboard, LV_KEYBOARD_MODE_TEXT_LOWER);
+    lv_keyboard_set_textarea(_keyboard, _textarea);
+    lv_obj_set_size(_keyboard, 320, 150);
+    lv_obj_align(_keyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+    // Checkmark applies the new URL, close button discards changes
+    lv_obj_add_event_cb(
+        _keyboard,
+        [](lv_event_t* e) {
+            auto* worker          = static_cast<LocalAgentWorker*>(lv_event_get_user_data(e));
+            worker->_confirm_flag = true;
+        },
+        LV_EVENT_READY, this);
+    lv_obj_add_event_cb(
+        _keyboard,
+        [](lv_event_t* e) {
+            auto* worker         = static_cast<LocalAgentWorker*>(lv_event_get_user_data(e));
+            worker->_cancel_flag = true;
+        },
+        LV_EVENT_CANCEL, this);
+}
+
+void LocalAgentWorker::update()
+{
+    if (_cancel_flag) {
+        _cancel_flag = false;
+        _is_done     = true;
+        return;
+    }
+
+    if (_confirm_flag) {
+        _confirm_flag = false;
+
+        std::string url = lv_textarea_get_text(_textarea);
+        // Trim whitespace
+        const auto first = url.find_first_not_of(" \t\r\n");
+        const auto last  = url.find_last_not_of(" \t\r\n");
+        url = (first == std::string::npos) ? std::string{} : url.substr(first, last - first + 1);
+
+        _config.otaUrl = url;
+        if (url.empty()) {
+            // Without a server URL the local agent can not be used
+            _config.enabled = false;
+        }
+        GetHAL().setLocalAgentConfig(_config);
+        mclog::tagInfo(_tag, "local agent config updated: enabled={}, otaUrl={}", _config.enabled, _config.otaUrl);
+        _is_done = true;
+    }
+}

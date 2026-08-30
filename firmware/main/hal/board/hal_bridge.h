@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <lvgl.h>
 #include <driver/i2c_master.h>
+#include <string>
 #include <string_view>
 
 namespace hal_bridge {
@@ -31,6 +32,11 @@ struct XiaozhiConfig_t {
     bool startAiAgentOnBoot          = false;
 };
 
+struct LocalAgentConfig_t {
+    bool enabled = false;  // Use the local agent server instead of the default cloud
+    std::string otaUrl;    // Config (OTA-style) endpoint of the local agent bridge
+};
+
 void lock();
 void unlock();
 Data_t& get_data();
@@ -52,6 +58,11 @@ bool is_xiaozhi_ready();
 bool is_xiaozhi_idle();
 XiaozhiConfig_t get_xiaozhi_config();
 void set_xiaozhi_config(const XiaozhiConfig_t& config);
+LocalAgentConfig_t get_local_agent_config();
+void set_local_agent_config(const LocalAgentConfig_t& config);
+// Point the agent runtime at the local server (or restore the default cloud)
+// according to the stored local agent config. Call before starting the runtime.
+void apply_local_agent_config();
 
 i2c_master_bus_handle_t board_get_i2c_bus();
 StackChanCamera* board_get_camera();
